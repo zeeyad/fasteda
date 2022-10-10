@@ -55,7 +55,8 @@ def main():
     st.balloons()
     st.markdown("### Data preview")
     if uploaded_file:
-        st.dataframe(df.head())
+        st.dataframe(df.head(50))
+        st.write('Shape: ',df.shape)
         st.selectbox('Please select the target variable', key="target_variable", options=columns_tuple, index=len(columns_tuple)-1)
         st.write(st.session_state)
         st.markdown("### Exploring the Target Variable")
@@ -76,7 +77,11 @@ def main():
         st.markdown("#### 4. Scatter Plots (Independent vs Dependent) variables")
         for idvr in st.session_state.independent_vars:
             scatter_plot(idvr, st.session_state.target_variable)
-
+        st.markdown("#### 5. Missing Indepedent Values")
+        missing_data = missing_values(df)
+        st.write('Do you want to remove the values with more than 1 missing values?')
+        if st.button('Yes'):
+            remove_values(missing_data, df)
 
     # elif page == "Scatter Plot":
     #     st.write(st.session_state)
@@ -99,6 +104,24 @@ def main():
     #     heat_map()
     #     st.header("Top 5 Heat Map")
     #     heat_map_5()
+
+def remove_values(missing_data,df):
+    st.write('Removing values')
+    st.write('Removing number of columns: ', len((missing_data[missing_data['Total'] > 1])))
+    st.write('Column Being Removed: ', (missing_data[missing_data['Total'] > 1]))
+    df = df.drop((missing_data[missing_data['Total'] > 1]).index,1)
+    df = df.drop(df.loc[df['Electrical'].isnull()].index)
+    st.write('Column successfully removed!')
+    st.write('Current available columns:')
+    st.write(df.head(50))
+    st.write('Current Shape: ',df.shape)
+
+def missing_values(df):
+    total = df.isnull().sum().sort_values(ascending=False)
+    percent = (df.isnull().sum() * 100/df.isnull().count()).sort_values(ascending=False)
+    missing_data = pd.concat([total, percent], axis=1, keys=['Total','Percent'])
+    st.write(missing_data.head(20))
+    return missing_data
 
 def distributionplot(target_variable):
     f,ax = plt.subplots(figsize=(12,5))
