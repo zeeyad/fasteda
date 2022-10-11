@@ -60,24 +60,32 @@ def main():
         st.selectbox('Please select the target variable', key="target_variable", options=columns_tuple, index=len(columns_tuple)-1)
         st.write(st.session_state)
         st.markdown("### Exploring the Target Variable")
-        st.markdown("#### 1. Describe Target Variable")
+        st.markdown("## 1. Describe Target Variable")
         st.write('Describing the Targeted Variable')
         st.write(df[st.session_state.target_variable].describe())
         st.write('Important Note: Make sure minimum is not less than zero as it will destroy the model')
-        st.markdown("#### 2. Histogram")
+        st.markdown("## 2. Histogram")
         distributionplot(st.session_state.target_variable)
         st.write('Skewness: ', df[st.session_state.target_variable].skew())
         st.write('Kurtosis: ', df[st.session_state.target_variable].kurt())
-        st.markdown("#### 3. Heatmap")
-        st.write('Select the top Independent Variable with close relationship the Target Variable')
+        st.markdown("## 3. Heatmap")
+        st.write('###Select the top Independent Variable with close relationship the Target Variable')
         heat_map_10(df, st.session_state.target_variable)
-        st.multiselect('Please select the strong relationship variables', columns_list, default= columns_list[0],key="independent_vars")
-        st.write('Independent Variables:', st.session_state.independent_vars)
+        st.multiselect('Please select the strong relationship variables for scatter plot', columns_list, default= columns_list[0],key="scatter_plot_vars")
+        st.write('Scatter Plot Indepedent Variables:', st.session_state.scatter_plot_vars)
         st.write(st.session_state)
-        st.markdown("#### 4. Scatter Plots (Independent vs Dependent) variables")
-        for idvr in st.session_state.independent_vars:
+        st.markdown("## 4. Scatter Plots (Independent vs Dependent) variables")
+        for idvr in st.session_state.scatter_plot_vars:
             scatter_plot(idvr, st.session_state.target_variable)
-        st.markdown("#### 5. Missing Indepedent Values")
+
+        st.markdown("## 5. Box Plots (Independent vs Dependent) variables")
+        st.multiselect('Please select the strong relationship variables for box plot', columns_list, default= columns_list[0],key="box_plot_vars")
+        st.write('Box Plot Indepedent Variables:', st.session_state.box_plot_vars)
+        st.write(st.session_state)
+        for idvr in st.session_state.box_plot_vars:
+            box_plot(idvr, st.session_state.target_variable)
+
+        st.markdown("## 6. Missing Indepedent Values")
         missing_data = missing_values(df)
         st.write('Do you want to remove the values with more than 1 missing values?')
         if st.button('Yes'):
@@ -104,6 +112,29 @@ def main():
     #     heat_map()
     #     st.header("Top 5 Heat Map")
     #     heat_map_5()
+
+def box_plot(indep_vars, dep_vars):
+    f, ax = plt.subplots(figsize=(8, 6))
+    data =pd.concat([df[dep_vars], df[indep_vars]],axis=1)
+    fig = sns.boxplot(x=indep_vars, y=dep_vars, data=data)
+    st.pyplot(f)
+
+def scatter_plot(indep_vars, dep_vars):
+    fig = plt.figure(figsize=(12, 5))
+    data = pd.concat([df[dep_vars], df[indep_vars]],axis=1)
+    data.plot.scatter(x=indep_vars, y=dep_vars)
+    plt.xlabel(indep_vars)
+    plt.ylabel(dep_vars)
+    plt.title("%s vs %s" %(indep_vars,dep_vars))
+    st.pyplot(plt)
+
+# def box_plot():
+#     f,ax = plt.subplots(figsize=(12, 10))
+#     data = pd.concat([df['SalePrice'], df['OverallQual']],axis=1)
+#     fig = sns.boxplot(x='OverallQual',y='SalePrice', data=data)
+#     fig.axis(ymin=0, ymax=800000)
+#     st.pyplot(f)
+
 
 def remove_values(missing_data,df):
     st.write('Removing values')
@@ -138,15 +169,6 @@ def heat_map_10(df, target_variable):
     hm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10}, yticklabels=cols.values, xticklabels=cols.values)
     st.pyplot(f)
 
-def scatter_plot(indep_vars, dep_vars):
-    fig = plt.figure(figsize=(12, 5))
-    data = pd.concat([df[dep_vars], df[indep_vars]],axis=1)
-    data.plot.scatter(x=indep_vars, y=dep_vars)
-    plt.xlabel(indep_vars)
-    plt.ylabel(dep_vars)
-    plt.title("%s vs %s" %(indep_vars,dep_vars))
-    st.pyplot(plt)
-
 def heat_map():
     cormat = df.corr()
     f,ax = plt.subplots(figsize=(12,9))
@@ -157,14 +179,6 @@ def histogram():
     fig = plt.figure(figsize=(12, 5))
     plt.hist(df["SalePrice"], color="y", bins=50)
     st.pyplot(fig)
-
-def box_plot():
-    f,ax = plt.subplots(figsize=(12, 10))
-    data = pd.concat([df['SalePrice'], df['OverallQual']],axis=1)
-    fig = sns.boxplot(x='OverallQual',y='SalePrice', data=data)
-    fig.axis(ymin=0, ymax=800000)
-    st.pyplot(f)
-
 
 if __name__ == "__main__":
     main()
