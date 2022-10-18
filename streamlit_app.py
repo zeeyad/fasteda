@@ -3,9 +3,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-# import scipy.stats
-# from scipy.stats import norm
-# import altair as alt
+from scipy import stats
 
 st.set_page_config(
     page_title="Exploratory Data Visualization", page_icon="📊", initial_sidebar_state="expanded"
@@ -27,30 +25,11 @@ if use_example_file:
 
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    # data_frame = sns.load_dataset(uploaded_file)
     columns_list = df.columns
     columns_tuple = tuple(columns_list)
     columns_array = np.asarray(columns_tuple)
 
-
-# def load_data():
-#     df = pd.read_csv("houseprices.csv")
-#     return df
-
-# df = load_data()
-
-def main():
-
-    # page = st.sidebar.selectbox(
-    #                       "Select a Page",
-    #                       [
-    #                         "Homepage",
-    #                         # "Scatter Plot",
-    #                         # "Histogram",
-    #                         # "Box Plot",
-    #                         # "Heat Map",
-    #                       ],)
-    # if page == "Homepage":  
+def main():  
 
     st.balloons()
     st.markdown("### Data preview")
@@ -58,60 +37,89 @@ def main():
         st.dataframe(df.head(50))
         st.write('Shape: ',df.shape)
         st.selectbox('Please select the target variable', key="target_variable", options=columns_tuple, index=len(columns_tuple)-1)
-        st.write(st.session_state)
+        # st.write(st.session_state)
         st.markdown("### Exploring the Target Variable")
+
+        # Target Variable
         st.markdown("## 1. Describe Target Variable")
         st.write('Describing the Targeted Variable')
         st.write(df[st.session_state.target_variable].describe())
         st.write('Important Note: Make sure minimum is not less than zero as it will destroy the model')
-        st.markdown("## 2. Histogram")
+
+        # Histogram
+        st.markdown("## 2. Histogram Target Variable")
         distributionplot(st.session_state.target_variable)
         st.write('Skewness: ', df[st.session_state.target_variable].skew())
         st.write('Kurtosis: ', df[st.session_state.target_variable].kurt())
+
+        # Heat Maps
         st.markdown("## 3. Heatmap")
-        st.write('###Select the top Independent Variable with close relationship the Target Variable')
+        st.write('Select the top Independent Variable with close relationship the Target Variable')
         heat_map_10(df, st.session_state.target_variable)
-        st.multiselect('Please select the strong relationship variables for scatter plot', columns_list, default= columns_list[0],key="scatter_plot_vars")
-        st.write('Scatter Plot Indepedent Variables:', st.session_state.scatter_plot_vars)
-        st.write(st.session_state)
+        # st.write('Scatter Plot Indepedent Variables:', st.session_state.scatter_plot_vars)
+        # st.write(st.session_state)
+
+        # Scatter Plots
         st.markdown("## 4. Scatter Plots (Independent vs Dependent) variables")
+        st.multiselect('Please select the strong relationship variables for scatter plot', columns_list, default=columns_list[1],key="scatter_plot_vars")
         for idvr in st.session_state.scatter_plot_vars:
             scatter_plot(idvr, st.session_state.target_variable)
 
-        st.markdown("## 5. Box Plots (Independent vs Dependent) variables")
-        st.multiselect('Please select the strong relationship variables for box plot', columns_list, default= columns_list[0],key="box_plot_vars")
-        st.write('Box Plot Indepedent Variables:', st.session_state.box_plot_vars)
-        st.write(st.session_state)
+        # Box Plots
+        st.markdown("## 5. Select Box Plots (Independent vs Dependent) variables")
+        st.write('Objective: How is the spread and the skewness' )
+        st.multiselect('Please select the strong relationship variables for box plot', columns_list, default=columns_list[1],key="box_plot_vars")
+        # st.write('Box Plot Indepedent Variables:', st.session_state.box_plot_vars)
+        # st.write(st.session_state)
         for idvr in st.session_state.box_plot_vars:
             box_plot(idvr, st.session_state.target_variable)
 
-        st.markdown("## 6. Missing Indepedent Values")
-        missing_data = missing_values(df)
-        st.write('Do you want to remove the values with more than 1 missing values?')
-        if st.button('Yes'):
-            remove_values(missing_data, df)
+        # User can plot histogram by selecting independent variables  
+        st.markdown('## 6. Select Histogram Variables')
+        st.write('Objective: Are the features a normal distribution or is it skewed?')
+        st.write('Requirements: Select a numerical value')
+        st.multiselect('Please select the independent variable', columns_list, default=columns_list[-1], key="data_transformation_vars")
+        for idvr in st.session_state.data_transformation_vars:
+            distributionplot(idvr)
+            probplot(idvr) 
+
+
+        # st.markdown("## ---Missing Values & Transformation---")
+        
+        # Missing Values 
+        # st.markdown("## 6. Missing Indepedent Values")
+        # missing_data = missing_values(df)
+        # st.write('Do you want to remove the values with more than 1 missing values?')
+        # if st.button('Yes! Please Log Transform', key="missing_data_btn"):
+        #     remove_values(missing_data, df)
+        
+
+        # if st.button('Yes', key="log_transform_btn"):
+        #     st.write('After Transformation')
+        #     for idvr in st.session_state.data_transformation_vars:
+        #         log_transformation(idvr)
+        #         probplot(idvr)
 
     # elif page == "Scatter Plot":
     #     st.write(st.session_state)
     #     st.write(st.session_state.target_variable)
     #     st.session_state['target_variable'] = st.session_state.target_variable
     #     scatter_plot()
-    # elif page == "Histogram":
-    #     st.write(st.session_state)
-    #     st.write(st.session_state.target_variable)
-    #     st.session_state['target_variable'] = st.session_state.target_variable
-    #     st.header("Histogram")
-    #     histogram()
-    # elif page == "Box Plot":
-    #     st.header("Box Plot")
-    #     st.session_state['target_variable'] = st.session_state.target_variable
-    #     box_plot()
-    # elif page == "Heat Map":
-    #     st.header("Heat Map")
-    #     st.session_state['target_variable'] = st.session_state.target_variable
-    #     heat_map()
-    #     st.header("Top 5 Heat Map")
-    #     heat_map_5()
+
+
+def probplot(indep_vars):
+    f,ax = plt.subplots(figsize=(12,5))
+    # if df[indep_vars]:
+    result = stats.probplot(df[indep_vars], plot=plt)
+    # sns.distplot(df[indep_vars])
+    st.pyplot(f)
+
+def log_transformation(indep_vars):
+    # if df[indep_vars]
+    df[indep_vars] = np.log(df[indep_vars])
+    f,ax = plt.subplots(figsize=(12,5))
+    sns.distplot(df[indep_vars])
+    st.pyplot(f)
 
 def box_plot(indep_vars, dep_vars):
     f, ax = plt.subplots(figsize=(8, 6))
@@ -128,13 +136,6 @@ def scatter_plot(indep_vars, dep_vars):
     plt.title("%s vs %s" %(indep_vars,dep_vars))
     st.pyplot(plt)
 
-# def box_plot():
-#     f,ax = plt.subplots(figsize=(12, 10))
-#     data = pd.concat([df['SalePrice'], df['OverallQual']],axis=1)
-#     fig = sns.boxplot(x='OverallQual',y='SalePrice', data=data)
-#     fig.axis(ymin=0, ymax=800000)
-#     st.pyplot(f)
-
 
 def remove_values(missing_data,df):
     st.write('Removing values')
@@ -146,13 +147,6 @@ def remove_values(missing_data,df):
     st.write('Current available columns:')
     st.write(df.head(50))
     st.write('Current Shape: ',df.shape)
-
-def missing_values(df):
-    total = df.isnull().sum().sort_values(ascending=False)
-    percent = (df.isnull().sum() * 100/df.isnull().count()).sort_values(ascending=False)
-    missing_data = pd.concat([total, percent], axis=1, keys=['Total','Percent'])
-    st.write(missing_data.head(20))
-    return missing_data
 
 def distributionplot(target_variable):
     f,ax = plt.subplots(figsize=(12,5))
@@ -179,6 +173,13 @@ def histogram():
     fig = plt.figure(figsize=(12, 5))
     plt.hist(df["SalePrice"], color="y", bins=50)
     st.pyplot(fig)
+
+def missing_values(df):
+    total = df.isnull().sum().sort_values(ascending=False)
+    percent = (df.isnull().sum() * 100/df.isnull().count()).sort_values(ascending=False)
+    missing_data = pd.concat([total, percent], axis=1, keys=['Total','Percent'])
+    st.write(missing_data.head(20))
+    return missing_data
 
 if __name__ == "__main__":
     main()
